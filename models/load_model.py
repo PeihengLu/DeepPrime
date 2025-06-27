@@ -1,7 +1,7 @@
 import os, sys, glob
 import inspect
 
-from models import DeepSpCas9, DeepPrime
+from models.DeepPrime.models import DeepSpCas9, DeepPrime
 
 '''
 Model finder repo
