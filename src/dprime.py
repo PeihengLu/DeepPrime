@@ -7,7 +7,7 @@ import torch
 import torch.nn.functional as F
 import torch.nn as nn
 from glob import glob
-from src.utils import seq_concat, select_cols
+from models.DeepPrime.src.utils import seq_concat, select_cols
 
 
 
@@ -80,7 +80,7 @@ def calculate_deepprime_score(df_input, pe_system='PE2max', cell_type='HEK293T')
     if torch.cuda.is_available(): device = 'cuda'
     else : device = 'cpu'
     
-    from models.load_model import load_deepprime
+    from models.DeepPrime.models.load_model import load_deepprime
 
     model_dir, model_type = load_deepprime(pe_system, cell_type, silent=True)
 
