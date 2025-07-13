@@ -1,7 +1,9 @@
 import os, sys, glob
 import inspect
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))  # for local testing
 
-from models.DeepPrime.models import DeepSpCas9, DeepPrime
+from models import DeepSpCas9, DeepPrime
 
 '''
 Model finder repo
