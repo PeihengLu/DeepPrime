@@ -7,7 +7,9 @@ import torch
 import torch.nn.functional as F
 import torch.nn as nn
 from glob import glob
-from models.DeepPrime.src.utils import seq_concat, select_cols
+from deepprime.src.utils import seq_concat, select_cols
+
+import lightning.pytorch as pl  # type: ignore[reportMissingImports]
 
 
 
@@ -73,6 +75,44 @@ class GeneInteractionModel(nn.Module):
         return F.softplus(out)
 
 
+class GeneInteractionLightningModule(pl.LightningModule):
+    """Lightning wrapper for DeepPrime GeneInteractionModel."""
+
+    def __init__(
+        self,
+        model: nn.Module,
+        *,
+        lr: float = 1e-4,
+        weight_decay: float = 0.0,
+    ):
+        super().__init__()
+        self.model = model
+        self.lr = float(lr)
+        self.weight_decay = float(weight_decay)
+        self.criterion = nn.MSELoss()
+
+    def training_step(self, batch, _batch_idx):
+        g, x, y = batch
+        pred = self.model(g.permute((0, 3, 1, 2)), x)
+        loss = self.criterion(pred, y)
+        self.log("train_loss", loss, on_step=False, on_epoch=True, prog_bar=False)
+        return loss
+
+    def validation_step(self, batch, _batch_idx):
+        g, x, y = batch
+        pred = self.model(g.permute((0, 3, 1, 2)), x)
+        loss = self.criterion(pred, y)
+        self.log("val_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
+        return loss
+
+    def configure_optimizers(self):
+        return torch.optim.Adam(
+            self.model.parameters(),
+            lr=self.lr,
+            weight_decay=self.weight_decay,
+        )
+
+
 
 def calculate_deepprime_score(df_input, pe_system='PE2max', cell_type='HEK293T'):
 
@@ -80,7 +120,7 @@ def calculate_deepprime_score(df_input, pe_system='PE2max', cell_type='HEK293T')
     if torch.cuda.is_available(): device = 'cuda'
     else : device = 'cpu'
     
-    from models.DeepPrime.models.load_model import load_deepprime
+    from deepprime.models.load_model import load_deepprime
 
     model_dir, model_type = load_deepprime(pe_system, cell_type, silent=True)
 
